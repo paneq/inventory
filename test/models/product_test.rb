@@ -39,12 +39,10 @@ class ProductTest < ActiveSupport::TestCase
   end
 
   test "can add product with initial available quantity" do
-    inventory = Inventory.new
     inventory.register_product("WROCLOVE2014", 10)
   end
 
   test "can get initial state" do
-    inventory = Inventory.new
     inventory.register_product("WROCLOVE2014", 10)
     qty = inventory.available_quantity("WROCLOVE2014")
     assert_equal 10, qty
@@ -57,7 +55,6 @@ class ProductTest < ActiveSupport::TestCase
   end
 
   test "can reserve some quantity" do
-    inventory = Inventory.new
     inventory.register_product("WROCLOVE2014", 10)
     inventory.reserve_product("WROCLOVE2014", 5)
 
@@ -69,7 +66,6 @@ class ProductTest < ActiveSupport::TestCase
   end
 
   test "can sell some reserved qty" do
-    inventory = Inventory.new
     inventory.register_product("WROCLOVE2014", 10)
     inventory.reserve_product("WROCLOVE2014", 5)
     inventory.sell_product("WROCLOVE2014", 5)
@@ -82,7 +78,6 @@ class ProductTest < ActiveSupport::TestCase
   end
 
   test "can change inventory qty" do
-    inventory = Inventory.new
     inventory.register_product("WROCLOVE2014", 9)
     inventory.reserve_product("WROCLOVE2014", 5)
     inventory.sell_product("WROCLOVE2014", 4)
@@ -99,7 +94,6 @@ class ProductTest < ActiveSupport::TestCase
   end
 
   test "can't change inventory qty to lower value than sold and reserved" do
-    inventory = Inventory.new
     inventory.register_product("WROCLOVE2014", 9)
     inventory.reserve_product("WROCLOVE2014", 5)
     inventory.sell_product("WROCLOVE2014", 4)
@@ -110,7 +104,6 @@ class ProductTest < ActiveSupport::TestCase
   end
 
   test "can't reserve if not enough product" do
-    inventory = Inventory.new
     inventory.register_product("WROCLOVE2014", 9)
 
     assert_raise(StandardError) do
@@ -132,4 +125,10 @@ class ProductTest < ActiveSupport::TestCase
 
   test "can refund sold product"
   test "can't refund more qty than sold for that order"
+
+  private
+
+  def inventory
+    @inventory ||= Inventory.new
+  end
 end
