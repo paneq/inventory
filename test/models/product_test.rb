@@ -4,7 +4,7 @@ class ProductTest < ActiveSupport::TestCase
 
   class Inventory
     def register_product(identifier, available_quantity)
-      Product.create!(name: identifier)
+      #Product.create!(name: identifier)
       @available_quantity = available_quantity
       @reserved_quantity  = 0
       @sold_quantity = 0
@@ -96,7 +96,16 @@ class ProductTest < ActiveSupport::TestCase
     assert_equal 3, qty
   end
 
-  test "can't change inventory qty to lower value than sold and reserved"
+  test "can't change inventory qty to lower value than sold and reserved" do
+    inventory = Inventory.new
+    inventory.register_product("WROCLOVE2014", 9)
+    inventory.reserve_product("WROCLOVE2014", 5)
+    inventory.sell_product("WROCLOVE2014", 4)
+    inventory.change_quantity("WROCLOVE2014", 5)
+    assert_raise(StandardError) do
+      inventory.change_quantity("WROCLOVE2014", 5)
+    end
+  end
 
   test "can't reserve if not enough product"
   test "can't sell if not enough product"
