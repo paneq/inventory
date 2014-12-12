@@ -33,6 +33,7 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def sell_product(identifier, qty)
+      raise StandardError, "quantity too big" if reserved_quantity(identifier) - qty < 0
       @reserved_quantity -= qty
       @sold_quantity     += qty
     end
@@ -116,7 +117,13 @@ class ProductTest < ActiveSupport::TestCase
     end
   end
 
-  test "can't sell if not enough product"
+  test "can't sell if not enough product" do
+    inventory.register_product("WROCLOVE2014", 10)
+    inventory.reserve_product("WROCLOVE2014", 4)
+    assert_raise(StandardError) do
+      inventory.sell_product("WROCLOVE2014", 5)
+    end
+  end
 
   test "can expire reserved product"
   test "can't expire more qty than reserved for that order"
