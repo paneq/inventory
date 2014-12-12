@@ -123,6 +123,11 @@ class ProductTest < ActiveSupport::TestCase
     assert_raise(StandardError) do
       inventory.sell_product("WROCLOVE2014", 5)
     end
+
+    inventory.sell_product("WROCLOVE2014", 2)
+    assert_raise(StandardError) do
+      inventory.sell_product("WROCLOVE2014", 3)
+    end
   end
 
   test "can expire reserved product"
