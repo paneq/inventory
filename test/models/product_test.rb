@@ -5,10 +5,15 @@ class ProductTest < ActiveSupport::TestCase
   class Inventory
     def register_product(identifier, available_quantity)
       Product.create!(name: identifier)
+      @available_quantity = available_quantity
     end
 
     def available_quantity(identifier)
-      10
+      @available_quantity
+    end
+
+    def reserve_product(identifier, qty)
+      @available_quantity -= qty
     end
   end
 
