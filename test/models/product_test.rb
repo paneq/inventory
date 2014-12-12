@@ -37,6 +37,10 @@ class ProductTest < ActiveSupport::TestCase
       @reserved_quantity -= qty
       @sold_quantity     += qty
     end
+
+    def expire_product(identifier, qty)
+      @reserved_quantity -= qty
+    end
   end
 
   test "can add product with initial available quantity" do
@@ -130,7 +134,13 @@ class ProductTest < ActiveSupport::TestCase
     end
   end
 
-  test "can expire reserved product"
+  test "can expire reserved product" do
+    inventory.register_product("WROCLOVE2014", 10)
+    inventory.reserve_product("WROCLOVE2014", 4)
+    inventory.expire_product("WROCLOVE2014", 4)
+    inventory.reserve_product("WROCLOVE2014", 10)
+  end
+
   test "can't expire more qty than reserved for that order"
 
   test "multi product setup"
