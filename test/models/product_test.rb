@@ -11,7 +11,11 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def available_quantity(identifier)
-      @available_quantity
+      @available_quantity - @reserved_quantity - @sold_quantity
+    end
+
+    def change_quantity(identifier, qty)
+      @available_quantity = qty
     end
 
     def reserved_quantity(identifier)
@@ -23,7 +27,6 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def reserve_product(identifier, qty)
-      @available_quantity -= qty
       @reserved_quantity  += qty
     end
 
@@ -75,4 +78,34 @@ class ProductTest < ActiveSupport::TestCase
     qty = inventory.sold_quantity("WROCLOVE2014")
     assert_equal 5, qty
   end
+
+  test "can change inventory qty" do
+    inventory = Inventory.new
+    inventory.register_product("WROCLOVE2014", 9)
+    inventory.reserve_product("WROCLOVE2014", 5)
+    inventory.sell_product("WROCLOVE2014", 4)
+    inventory.change_quantity("WROCLOVE2014", 8)
+
+    qty = inventory.reserved_quantity("WROCLOVE2014")
+    assert_equal 1, qty
+
+    qty = inventory.sold_quantity("WROCLOVE2014")
+    assert_equal 4, qty
+
+    qty = inventory.available_quantity("WROCLOVE2014")
+    assert_equal 3, qty
+  end
+
+  test "can't change inventory qty to lower value than sold and reserved"
+
+  test "can't reserve if not enough product"
+  test "can't sell if not enough product"
+
+  test "can expire reserved product"
+  test "can't expire more qty than reserved for that order"
+
+  test "multi product setup"
+
+  test "can refund sold product"
+  test "can't refund more qty than sold for that order"
 end
