@@ -42,6 +42,10 @@ class ProductTest < ActiveSupport::TestCase
       raise StandardError, "quantity too big" if qty > reserved_quantity(identifier)
       @reserved_quantity -= qty
     end
+
+    def refund_product(identifier, qty)
+      @sold_quantity -= qty
+    end
   end
 
   test "can add product with initial available quantity" do
@@ -155,7 +159,21 @@ class ProductTest < ActiveSupport::TestCase
     end
   end
 
-  test "can refund sold product"
+  test "can refund sold product" do
+    inventory.register_product("WROCLOVE2014", 10)
+    inventory.reserve_product("WROCLOVE2014", 7)
+    inventory.sell_product("WROCLOVE2014", 6)
+    inventory.refund_product("WROCLOVE2014", 5)
+
+    qty = inventory.available_quantity("WROCLOVE2014")
+    assert_equal 8, qty
+
+    qty = inventory.reserved_quantity("WROCLOVE2014")
+    assert_equal 1, qty
+
+    qty = inventory.sold_quantity("WROCLOVE2014")
+    assert_equal 1, qty
+  end
 
   test "can't refund more qty than sold"
 
