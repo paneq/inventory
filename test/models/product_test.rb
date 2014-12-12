@@ -23,8 +23,13 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def reserve_product(identifier, qty)
-      @reserved_quantity += qty
       @available_quantity -= qty
+      @reserved_quantity  += qty
+    end
+
+    def sell_product(identifier, qty)
+      @reserved_quantity -= qty
+      @sold_quantity     += qty
     end
   end
 
@@ -55,6 +60,19 @@ class ProductTest < ActiveSupport::TestCase
     assert_equal 5, qty
 
     qty = inventory.reserved_quantity("WROCLOVE2014")
+    assert_equal 5, qty
+  end
+
+  test "can sell some reserved qty" do
+    inventory = Inventory.new
+    inventory.register_product("WROCLOVE2014", 10)
+    inventory.reserve_product("WROCLOVE2014", 5)
+    inventory.sell_product("WROCLOVE2014", 5)
+
+    qty = inventory.reserved_quantity("WROCLOVE2014")
+    assert_equal 0, qty
+
+    qty = inventory.sold_quantity("WROCLOVE2014")
     assert_equal 5, qty
   end
 end
