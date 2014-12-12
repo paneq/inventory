@@ -15,6 +15,7 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def change_quantity(identifier, qty)
+      raise StandardError, "quantity too low" if qty - @reserved_quantity - @sold_quantity < 0
       @available_quantity = qty
     end
 
@@ -103,7 +104,7 @@ class ProductTest < ActiveSupport::TestCase
     inventory.sell_product("WROCLOVE2014", 4)
     inventory.change_quantity("WROCLOVE2014", 5)
     assert_raise(StandardError) do
-      inventory.change_quantity("WROCLOVE2014", 5)
+      inventory.change_quantity("WROCLOVE2014", 4)
     end
   end
 
