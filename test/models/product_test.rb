@@ -23,4 +23,12 @@ class ProductTest < ActiveSupport::TestCase
     qty = inventory.available_quantity("WROCLOVE2014")
     assert_equal 10, qty
   end
+
+  test "can reserve some quantity" do
+    inventory = Inventory.new
+    inventory.register_product("WROCLOVE2014", 10)
+    inventory.reserve_product("WROCLOVE2014", 5)
+    qty = inventory.available_quantity("WROCLOVE2014")
+    assert_equal 5, qty
+  end
 end
