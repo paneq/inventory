@@ -191,7 +191,35 @@ class ProductTest < ActiveSupport::TestCase
     end
   end
 
-  test "multi product setup"
+  test "multi product setup" do
+    inventory.register_product("WROCLOVE2014", 9)
+    inventory.change_quantity("WROCLOVE2014", 10)
+    inventory.reserve_product("WROCLOVE2014", 8)
+    inventory.sell_product("WROCLOVE2014", 6)
+    inventory.refund_product("WROCLOVE2014", 4)
+    inventory.expire_product("WROCLOVE2014", 1)
+
+    inventory.register_product("DRUGCAMP2015", 90)
+    inventory.change_quantity("DRUGCAMP2015", 100)
+    inventory.reserve_product("DRUGCAMP2015", 80)
+    inventory.sell_product("DRUGCAMP2015", 60)
+    inventory.refund_product("DRUGCAMP2015", 40)
+    inventory.expire_product("DRUGCAMP2015", 10)
+
+    qty = inventory.reserved_quantity("WROCLOVE2014")
+    assert_equal 1, qty
+    qty = inventory.sold_quantity("WROCLOVE2014")
+    assert_equal 2, qty
+    qty = inventory.available_quantity("WROCLOVE2014")
+    assert_equal 7, qty
+
+    qty = inventory.reserved_quantity("DRUGCAMP2015")
+    assert_equal 10, qty
+    qty = inventory.sold_quantity("DRUGCAMP2015")
+    assert_equal 20, qty
+    qty = inventory.available_quantity("DRUGCAMP2015")
+    assert_equal 70, qty
+  end
 
   # Per order rules... - out of scope for now
   # test "can't expire more qty than reserved for that order"
