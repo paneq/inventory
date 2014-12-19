@@ -3,49 +3,52 @@ require 'test_helper'
 class ProductTest < ActiveSupport::TestCase
 
   class Inventory
+    def initialize
+      @available_quantity = Hash.new(0)
+      @reserved_quantity  = Hash.new(0)
+      @sold_quantity      = Hash.new(0)
+    end
+
     def register_product(identifier, available_quantity)
-      #Product.create!(name: identifier)
-      @available_quantity = available_quantity
-      @reserved_quantity  = 0
-      @sold_quantity = 0
+      @available_quantity[identifier] = available_quantity
     end
 
     def available_quantity(identifier)
-      @available_quantity - @reserved_quantity - @sold_quantity
+      @available_quantity[identifier] - @reserved_quantity[identifier] - @sold_quantity[identifier]
     end
 
     def change_quantity(identifier, qty)
-      raise StandardError, "quantity too low" if qty - @reserved_quantity - @sold_quantity < 0
-      @available_quantity = qty
+      raise StandardError, "quantity too low" if qty - @reserved_quantity[identifier] - @sold_quantity[identifier] < 0
+      @available_quantity[identifier] = qty
     end
 
     def reserved_quantity(identifier)
-      @reserved_quantity
+      @reserved_quantity[identifier]
     end
 
     def sold_quantity(identifier)
-      @sold_quantity
+      @sold_quantity[identifier]
     end
 
     def reserve_product(identifier, qty)
       raise StandardError, "quantity too big" if available_quantity(identifier) - qty < 0
-      @reserved_quantity  += qty
+      @reserved_quantity[identifier]  += qty
     end
 
     def sell_product(identifier, qty)
       raise StandardError, "quantity too big" if reserved_quantity(identifier) - qty < 0
-      @reserved_quantity -= qty
-      @sold_quantity     += qty
+      @reserved_quantity[identifier] -= qty
+      @sold_quantity[identifier]     += qty
     end
 
     def expire_product(identifier, qty)
       raise StandardError, "quantity too big" if qty > reserved_quantity(identifier)
-      @reserved_quantity -= qty
+      @reserved_quantity[identifier] -= qty
     end
 
     def refund_product(identifier, qty)
       raise StandardError, "quantity too big" if qty > sold_quantity(identifier)
-      @sold_quantity -= qty
+      @sold_quantity[identifier] -= qty
     end
   end
 
@@ -220,10 +223,6 @@ class ProductTest < ActiveSupport::TestCase
     qty = inventory.available_quantity("DRUGCAMP2015")
     assert_equal 70, qty
   end
-
-  # Per order rules... - out of scope for now
-  # test "can't expire more qty than reserved for that order"
-  # test "can't refund more qty than sold for that order"
 
   private
 
