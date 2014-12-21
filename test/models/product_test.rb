@@ -59,11 +59,15 @@ class ProductTest < ActiveSupport::TestCase
     private
 
     def quantity_lowered_than_reserved_and_sold(qty, identifier)
-      qty < reserved_quantity(identifier) + sold_quantity(identifier)
+      qty < not_available_quantity(identifier)
     end
 
     def store_quantity(identifier)
       @store_quantity[identifier].sum
+    end
+
+    def not_available_quantity(identifier)
+      reserved_quantity(identifier) + sold_quantity(identifier)
     end
   end
 
