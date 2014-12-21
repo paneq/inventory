@@ -8,23 +8,23 @@ class ProductTest < ActiveSupport::TestCase
     QuantityTooLow = Class.new(Error)
 
     def initialize
-      @available_quantity = Hash.new{|hash, key| hash[key] = [] }
+      @store_quantity     = Hash.new{|hash, key| hash[key] = [] }
       @reserved_quantity  = Hash.new{|hash, key| hash[key] = [] }
       @sold_quantity      = Hash.new{|hash, key| hash[key] = [] }
     end
 
-    def register_product(identifier, available_quantity)
-      @available_quantity[identifier] << available_quantity
+    def register_product(identifier, store_quantity)
+      @store_quantity[identifier] << store_quantity
     end
 
     def available_quantity(identifier)
-      @available_quantity[identifier].sum - reserved_quantity(identifier) - sold_quantity(identifier)
+      @store_quantity[identifier].sum - reserved_quantity(identifier) - sold_quantity(identifier)
     end
 
     def change_quantity(identifier, qty)
       raise QuantityTooLow if quantity_lowered_than_reserved_and_sold(qty, identifier)
-      @available_quantity[identifier] << -@available_quantity[identifier].last
-      @available_quantity[identifier] << qty
+      @store_quantity[identifier] << -@store_quantity[identifier].last
+      @store_quantity[identifier] << qty
     end
 
     def reserved_quantity(identifier)
