@@ -199,6 +199,13 @@ class ProductTest < ActiveSupport::TestCase
     end
   end
 
+  test "can refund equal qty that sold" do
+    inventory.register_product("WROCLOVE2014", 5)
+    inventory.reserve_product("WROCLOVE2014", 5)
+    inventory.sell_product("WROCLOVE2014", 5)
+    inventory.refund_product("WROCLOVE2014", 5)
+  end
+
   test "multi product setup" do
     inventory.register_product("WROCLOVE2014", 9)
     inventory.change_quantity("WROCLOVE2014", 10)
