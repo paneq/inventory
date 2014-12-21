@@ -18,7 +18,7 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def available_quantity(identifier)
-      @available_quantity[identifier].sum - @reserved_quantity[identifier].sum - @sold_quantity[identifier].sum
+      @available_quantity[identifier].sum - reserved_quantity(identifier) - sold_quantity(identifier)
     end
 
     def change_quantity(identifier, qty)
