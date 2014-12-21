@@ -22,7 +22,7 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def change_quantity(identifier, qty)
-      raise QuantityTooLow if qty - @reserved_quantity[identifier].sum - @sold_quantity[identifier].sum < 0
+      raise QuantityTooLow if qty - reserved_quantity(identifier) - sold_quantity(identifier) < 0
       @available_quantity[identifier] << -@available_quantity[identifier].last
       @available_quantity[identifier] << qty
     end
