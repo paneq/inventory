@@ -22,7 +22,7 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def change_quantity(identifier, qty)
-      raise QuantityTooLow if qty < reserved_quantity(identifier) + sold_quantity(identifier)
+      raise QuantityTooLow if quantity_lowered_than_reserved_and_sold(qty, identifier)
       @available_quantity[identifier] << -@available_quantity[identifier].last
       @available_quantity[identifier] << qty
     end
@@ -54,6 +54,12 @@ class ProductTest < ActiveSupport::TestCase
     def refund_product(identifier, qty)
       raise QuantityTooBig if qty > sold_quantity(identifier)
       @sold_quantity[identifier] << -qty
+    end
+
+    private
+
+    def quantity_lowered_than_reserved_and_sold(qty, identifier)
+      qty < reserved_quantity(identifier) + sold_quantity(identifier)
     end
   end
 
