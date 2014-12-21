@@ -36,12 +36,12 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def reserve_product(identifier, qty)
-      raise QuantityTooBig if available_quantity(identifier) - qty < 0
+      raise QuantityTooBig if available_quantity(identifier) < qty
       @reserved_quantity[identifier]  << qty
     end
 
     def sell_product(identifier, qty)
-      raise QuantityTooBig if reserved_quantity(identifier) - qty < 0
+      raise QuantityTooBig if reserved_quantity(identifier) < qty
       @reserved_quantity[identifier] << -qty
       @sold_quantity[identifier]     << qty
     end
