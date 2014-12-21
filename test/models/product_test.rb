@@ -1,8 +1,12 @@
 require 'test_helper'
 
 class ProductTest < ActiveSupport::TestCase
-
   class Inventory
+
+    Error = Class.new(StandardError)
+    QuantityTooBig = Class.new(Error)
+    QuantityTooLow = Class.new(Error)
+
     def initialize
       @available_quantity = Hash.new{|hash, key| hash[key] = [0] }
       @reserved_quantity  = Hash.new{|hash, key| hash[key] = [0] }
@@ -10,7 +14,6 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def register_product(identifier, available_quantity)
-      #Product.create!(name: identifier)
       @available_quantity[identifier] << available_quantity
     end
 
@@ -19,7 +22,7 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def change_quantity(identifier, qty)
-      raise StandardError, "quantity too low" if qty - @reserved_quantity[identifier].sum - @sold_quantity[identifier].sum < 0
+      raise QuantityTooLow if qty - @reserved_quantity[identifier].sum - @sold_quantity[identifier].sum < 0
       @available_quantity[identifier] << -@available_quantity[identifier].last
       @available_quantity[identifier] << qty
     end
@@ -33,23 +36,23 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def reserve_product(identifier, qty)
-      raise StandardError, "quantity too big" if available_quantity(identifier) - qty < 0
+      raise QuantityTooBig if available_quantity(identifier) - qty < 0
       @reserved_quantity[identifier]  << qty
     end
 
     def sell_product(identifier, qty)
-      raise StandardError, "quantity too big" if reserved_quantity(identifier) - qty < 0
+      raise QuantityTooBig if reserved_quantity(identifier) - qty < 0
       @reserved_quantity[identifier] << -qty
       @sold_quantity[identifier]     << qty
     end
 
     def expire_product(identifier, qty)
-      raise StandardError, "quantity too big" if qty > reserved_quantity(identifier)
+      raise QuantityTooBig if qty > reserved_quantity(identifier)
       @reserved_quantity[identifier] << -qty
     end
 
     def refund_product(identifier, qty)
-      raise StandardError, "quantity too big" if qty > sold_quantity(identifier)
+      raise QuantityTooBig if qty > sold_quantity(identifier)
       @sold_quantity[identifier] << -qty
     end
   end
@@ -114,7 +117,7 @@ class ProductTest < ActiveSupport::TestCase
     inventory.reserve_product("WROCLOVE2014", 5)
     inventory.sell_product("WROCLOVE2014", 4)
     inventory.change_quantity("WROCLOVE2014", 5)
-    assert_raise(StandardError) do
+    assert_raise(Inventory::QuantityTooLow) do
       inventory.change_quantity("WROCLOVE2014", 4)
     end
   end
@@ -122,12 +125,12 @@ class ProductTest < ActiveSupport::TestCase
   test "can't reserve if not enough product" do
     inventory.register_product("WROCLOVE2014", 9)
 
-    assert_raise(StandardError) do
+    assert_raise(Inventory::QuantityTooBig) do
       inventory.reserve_product("WROCLOVE2014", 10)
     end
 
     inventory.reserve_product("WROCLOVE2014", 5)
-    assert_raise(StandardError) do
+    assert_raise(Inventory::QuantityTooBig) do
       inventory.reserve_product("WROCLOVE2014", 5)
     end
   end
@@ -135,12 +138,12 @@ class ProductTest < ActiveSupport::TestCase
   test "can't sell if not enough product" do
     inventory.register_product("WROCLOVE2014", 10)
     inventory.reserve_product("WROCLOVE2014", 4)
-    assert_raise(StandardError) do
+    assert_raise(Inventory::QuantityTooBig) do
       inventory.sell_product("WROCLOVE2014", 5)
     end
 
     inventory.sell_product("WROCLOVE2014", 2)
-    assert_raise(StandardError) do
+    assert_raise(Inventory::QuantityTooBig) do
       inventory.sell_product("WROCLOVE2014", 3)
     end
   end
@@ -155,12 +158,12 @@ class ProductTest < ActiveSupport::TestCase
   test "can't expire more qty than reserved" do
     inventory.register_product("WROCLOVE2014", 10)
     inventory.reserve_product("WROCLOVE2014", 3)
-    assert_raise(StandardError) do
+    assert_raise(Inventory::QuantityTooBig) do
       inventory.expire_product("WROCLOVE2014", 4)
     end
 
     inventory.expire_product("WROCLOVE2014", 1)
-    assert_raise(StandardError) do
+    assert_raise(Inventory::QuantityTooBig) do
       inventory.expire_product("WROCLOVE2014", 3)
     end
   end
@@ -186,12 +189,12 @@ class ProductTest < ActiveSupport::TestCase
     inventory.reserve_product("WROCLOVE2014", 7)
     inventory.sell_product("WROCLOVE2014", 6)
 
-    assert_raise(StandardError) do
+    assert_raise(Inventory::QuantityTooBig) do
       inventory.refund_product("WROCLOVE2014", 7)
     end
 
     inventory.refund_product("WROCLOVE2014", 5)
-    assert_raise(StandardError) do
+    assert_raise(Inventory::QuantityTooBig) do
       inventory.refund_product("WROCLOVE2014", 2)
     end
   end
