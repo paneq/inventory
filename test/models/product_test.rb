@@ -22,7 +22,7 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def change_quantity(identifier, qty)
-      raise QuantityTooLow if quantity_lowered_than_reserved_and_sold(qty, identifier)
+      raise QuantityTooLow if qty  < not_available_quantity(identifier)
       @store_quantity[identifier] << -store_quantity(identifier)
       @store_quantity[identifier] << qty
     end
@@ -57,10 +57,6 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     private
-
-    def quantity_lowered_than_reserved_and_sold(qty, identifier)
-      qty < not_available_quantity(identifier)
-    end
 
     def store_quantity(identifier)
       @store_quantity[identifier].sum
