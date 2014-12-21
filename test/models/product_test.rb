@@ -3,7 +3,7 @@ require 'test_helper'
 class ProductTest < ActiveSupport::TestCase
   class Inventory
 
-    Error = Class.new(StandardError)
+    Error          = Class.new(StandardError)
     QuantityTooBig = Class.new(Error)
     QuantityTooLow = Class.new(Error)
 
