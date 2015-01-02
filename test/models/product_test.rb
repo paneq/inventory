@@ -77,8 +77,6 @@ class ProductTest < ActiveSupport::TestCase
 
     def initialize
       @store_quantity     = Hash.new{|hash, key| hash[key] = [] }
-      @reserved_quantity  = Hash.new{|hash, key| hash[key] = [] }
-      @sold_quantity      = Hash.new{|hash, key| hash[key] = [] }
       @history            = Hash.new{|hash, key| hash[key] = [] }
     end
 
