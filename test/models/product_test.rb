@@ -30,7 +30,7 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def sold_quantity(identifier)
-      @storage.sold_quantity(identifier)
+      product(identifier).sold_quantity
     end
 
     def reserve_product(identifier, qty)
@@ -67,15 +67,18 @@ class ProductTest < ActiveSupport::TestCase
     class Product
       attr_reader :available_quantity,
                   :not_available_quantity,
-                  :reserved_quantity
+                  :reserved_quantity,
+                  :sold_quantity
 
       def initialize(available_quantity:     available_quantity,
                      not_available_quantity: not_available_quantity,
-                     reserved_quantity:      reserved_quantity
+                     reserved_quantity:      reserved_quantity,
+                     sold_quantity:          sold_quantity
       )
         @available_quantity     = available_quantity
         @not_available_quantity = not_available_quantity
         @reserved_quantity      = reserved_quantity
+        @sold_quantity          = sold_quantity
       end
 
       def change_quantity(qty)
@@ -93,7 +96,8 @@ class ProductTest < ActiveSupport::TestCase
       def get_product(identifier)
         Product.new(available_quantity:     available_quantity(identifier),
                     not_available_quantity: not_available_quantity(identifier),
-                    reserved_quantity:      reserved_quantity(identifier))
+                    reserved_quantity:      reserved_quantity(identifier),
+                    sold_quantity:          sold_quantity(identifier))
       end
 
       def register_product(identifier, store_quantity)
