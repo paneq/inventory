@@ -17,6 +17,10 @@ class ProductTest < ActiveSupport::TestCase
       def reserved_quantity
         -@sold_quantity
       end
+
+      def available_quantity
+        0
+      end
     end
 
     class Refund
@@ -24,6 +28,10 @@ class ProductTest < ActiveSupport::TestCase
 
       def initialize(refunded_quantity)
         @refunded_quantity  = refunded_quantity
+      end
+
+      def available_quantity
+        @refunded_quantity
       end
 
       def sold_quantity
@@ -76,6 +84,10 @@ class ProductTest < ActiveSupport::TestCase
         @store_quantity = store_quantity
       end
 
+      def available_quantity
+        @store_quantity
+      end
+
       def reserved_quantity
         0
       end
@@ -117,14 +129,14 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def available_quantity(identifier)
-      store_quantity(identifier) - reserved_quantity(identifier) - sold_quantity(identifier)
+      @history[identifier].map(&:available_quantity).sum
     end
 
     def change_quantity(identifier, qty)
       raise QuantityTooLow if qty  < not_available_quantity(identifier)
+      @history[identifier] << StoreQuantityChange.new(qty, store_quantity(identifier))
       @store_quantity[identifier] << -store_quantity(identifier)
       @store_quantity[identifier] << qty
-      @history[identifier] << StoreQuantityChange.new(qty, store_quantity(identifier))
     end
 
     def reserved_quantity(identifier)
