@@ -7,6 +7,7 @@ class ProductTest < ActiveSupport::TestCase
     QuantityTooBig = Class.new(Error)
     QuantityTooLow = Class.new(Error)
 
+
     def initialize
       @storage = Storage.new
     end
@@ -16,16 +17,16 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def available_quantity(identifier)
-      @storage.available_quantity(identifier)
+      product(identifier).available_quantity
     end
 
     def change_quantity(identifier, qty)
-      raise QuantityTooLow if qty  < @storage.not_available_quantity(identifier)
+      product(identifier).change_quantity(qty)
       @storage.change_quantity(identifier, qty)
     end
 
     def reserved_quantity(identifier)
-      @storage.reserved_quantity(identifier)
+      product(identifier).reserved_quantity
     end
 
     def sold_quantity(identifier)
@@ -54,65 +55,97 @@ class ProductTest < ActiveSupport::TestCase
 
     private
 
+    def product(identifier)
+      @storage.get_product(identifier)
+    end
+
     def store_quantity(identifier)
       @storage.store_quantity(identifier)
     end
 
+
+    class Product
+      attr_reader :available_quantity,
+                  :not_available_quantity,
+                  :reserved_quantity
+
+      def initialize(available_quantity:     available_quantity,
+                     not_available_quantity: not_available_quantity,
+                     reserved_quantity:      reserved_quantity
+      )
+        @available_quantity     = available_quantity
+        @not_available_quantity = not_available_quantity
+        @reserved_quantity      = reserved_quantity
+      end
+
+      def change_quantity(qty)
+        raise QuantityTooLow if qty  < @not_available_quantity
+      end
+    end
+
+    class Storage
+      def initialize
+        @store_quantity     = Hash.new{|hash, key| hash[key] = [] }
+        @reserved_quantity  = Hash.new{|hash, key| hash[key] = [] }
+        @sold_quantity      = Hash.new{|hash, key| hash[key] = [] }
+      end
+
+      def get_product(identifier)
+        Product.new(available_quantity:     available_quantity(identifier),
+                    not_available_quantity: not_available_quantity(identifier),
+                    reserved_quantity:      reserved_quantity(identifier))
+      end
+
+      def register_product(identifier, store_quantity)
+        @store_quantity[identifier] << store_quantity
+      end
+
+      def available_quantity(identifier)
+        store_quantity(identifier) - reserved_quantity(identifier) - sold_quantity(identifier)
+      end
+
+      def change_quantity(identifier, qty)
+        @store_quantity[identifier] << -store_quantity(identifier)
+        @store_quantity[identifier] << qty
+      end
+
+      def reserved_quantity(identifier)
+        @reserved_quantity[identifier].sum
+      end
+
+      def sold_quantity(identifier)
+        @sold_quantity[identifier].sum
+      end
+
+      def reserve_product(identifier, qty)
+        @reserved_quantity[identifier]  << qty
+      end
+
+      def sell_product(identifier, qty)
+        @reserved_quantity[identifier] << -qty
+        @sold_quantity[identifier]     << qty
+      end
+
+      def expire_product(identifier, qty)
+        @reserved_quantity[identifier] << -qty
+      end
+
+      def refund_product(identifier, qty)
+        @sold_quantity[identifier] << -qty
+      end
+
+      def store_quantity(identifier)
+        @store_quantity[identifier].sum
+      end
+
+      def not_available_quantity(identifier)
+        reserved_quantity(identifier) + sold_quantity(identifier)
+      end
+    end
+
   end
 
-  class Storage
-    def initialize
-      @store_quantity     = Hash.new{|hash, key| hash[key] = [] }
-      @reserved_quantity  = Hash.new{|hash, key| hash[key] = [] }
-      @sold_quantity      = Hash.new{|hash, key| hash[key] = [] }
-    end
 
-    def register_product(identifier, store_quantity)
-      @store_quantity[identifier] << store_quantity
-    end
-
-    def available_quantity(identifier)
-      store_quantity(identifier) - reserved_quantity(identifier) - sold_quantity(identifier)
-    end
-
-    def change_quantity(identifier, qty)
-      @store_quantity[identifier] << -store_quantity(identifier)
-      @store_quantity[identifier] << qty
-    end
-
-    def reserved_quantity(identifier)
-      @reserved_quantity[identifier].sum
-    end
-
-    def sold_quantity(identifier)
-      @sold_quantity[identifier].sum
-    end
-
-    def reserve_product(identifier, qty)
-      @reserved_quantity[identifier]  << qty
-    end
-
-    def sell_product(identifier, qty)
-      @reserved_quantity[identifier] << -qty
-      @sold_quantity[identifier]     << qty
-    end
-
-    def expire_product(identifier, qty)
-      @reserved_quantity[identifier] << -qty
-    end
-
-    def refund_product(identifier, qty)
-      @sold_quantity[identifier] << -qty
-    end
-
-    def store_quantity(identifier)
-      @store_quantity[identifier].sum
-    end
-
-    def not_available_quantity(identifier)
-      reserved_quantity(identifier) + sold_quantity(identifier)
-    end
-  end
 
   test "can add product with initial available quantity" do
     inventory.register_product("WROCLOVE2014", 10)
