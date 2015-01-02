@@ -119,7 +119,7 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def initialize
-      @history            = Hash.new{|hash, key| hash[key] = [] }
+      @history = Hash.new{|hash, key| hash[key] = [] }
     end
 
     def register_product(identifier, store_quantity)
