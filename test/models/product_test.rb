@@ -8,6 +8,7 @@ class ProductTest < ActiveSupport::TestCase
     QuantityTooLow = Class.new(Error)
 
     def initialize
+      @storage = Storage.new
       @store_quantity     = Hash.new{|hash, key| hash[key] = [] }
       @reserved_quantity  = Hash.new{|hash, key| hash[key] = [] }
       @sold_quantity      = Hash.new{|hash, key| hash[key] = [] }
@@ -65,6 +66,10 @@ class ProductTest < ActiveSupport::TestCase
     def not_available_quantity(identifier)
       reserved_quantity(identifier) + sold_quantity(identifier)
     end
+  end
+
+  class Storage
+
   end
 
   test "can add product with initial available quantity" do
