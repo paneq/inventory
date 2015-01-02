@@ -20,6 +20,19 @@ class ProductTest < ActiveSupport::TestCase
       end
     end
 
+    class Refund
+      attr_reader :product_identifier, :refunded_quantity
+
+      def initialize(product_identifier, refunded_quantity)
+        @product_identifier = product_identifier
+        @refunded_quantity  = refunded_quantity
+      end
+
+      def sold_quantity
+        -@refunded_quantity
+      end
+    end
+
     def initialize
       @store_quantity     = Hash.new{|hash, key| hash[key] = [] }
       @reserved_quantity  = Hash.new{|hash, key| hash[key] = [] }
@@ -69,6 +82,7 @@ class ProductTest < ActiveSupport::TestCase
     def refund_product(identifier, qty)
       raise QuantityTooBig if qty > sold_quantity(identifier)
       @sold_quantity[identifier] << -qty
+      @sales[identifier] << Refund.new(identifier, qty)
     end
 
     private
