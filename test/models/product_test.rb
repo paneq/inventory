@@ -9,6 +9,59 @@ class ProductTest < ActiveSupport::TestCase
 
     def initialize
       @storage = Storage.new
+    end
+
+    def register_product(identifier, store_quantity)
+      @storage.register_product(identifier, store_quantity)
+    end
+
+    def available_quantity(identifier)
+      @storage.available_quantity(identifier)
+    end
+
+    def change_quantity(identifier, qty)
+      raise QuantityTooLow if qty  < @storage.not_available_quantity(identifier)
+      @storage.change_quantity(identifier, qty)
+    end
+
+    def reserved_quantity(identifier)
+      @storage.reserved_quantity(identifier)
+    end
+
+    def sold_quantity(identifier)
+      @storage.sold_quantity(identifier)
+    end
+
+    def reserve_product(identifier, qty)
+      raise QuantityTooBig if qty > @storage.available_quantity(identifier)
+      @storage.reserve_product(identifier, qty)
+    end
+
+    def sell_product(identifier, qty)
+      raise QuantityTooBig if qty > @storage.reserved_quantity(identifier)
+      @storage.sell_product(identifier, qty)
+    end
+
+    def expire_product(identifier, qty)
+      raise QuantityTooBig if qty > @storage.reserved_quantity(identifier)
+      @storage.expire_product(identifier, qty)
+    end
+
+    def refund_product(identifier, qty)
+      raise QuantityTooBig if qty > @storage.sold_quantity(identifier)
+      @storage.refund_product(identifier, qty)
+    end
+
+    private
+
+    def store_quantity(identifier)
+      @storage.store_quantity(identifier)
+    end
+
+  end
+
+  class Storage
+    def initialize
       @store_quantity     = Hash.new{|hash, key| hash[key] = [] }
       @reserved_quantity  = Hash.new{|hash, key| hash[key] = [] }
       @sold_quantity      = Hash.new{|hash, key| hash[key] = [] }
@@ -23,7 +76,6 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def change_quantity(identifier, qty)
-      raise QuantityTooLow if qty  < not_available_quantity(identifier)
       @store_quantity[identifier] << -store_quantity(identifier)
       @store_quantity[identifier] << qty
     end
@@ -37,27 +89,21 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def reserve_product(identifier, qty)
-      raise QuantityTooBig if qty > available_quantity(identifier)
       @reserved_quantity[identifier]  << qty
     end
 
     def sell_product(identifier, qty)
-      raise QuantityTooBig if qty > reserved_quantity(identifier)
       @reserved_quantity[identifier] << -qty
       @sold_quantity[identifier]     << qty
     end
 
     def expire_product(identifier, qty)
-      raise QuantityTooBig if qty > reserved_quantity(identifier)
       @reserved_quantity[identifier] << -qty
     end
 
     def refund_product(identifier, qty)
-      raise QuantityTooBig if qty > sold_quantity(identifier)
       @sold_quantity[identifier] << -qty
     end
-
-    private
 
     def store_quantity(identifier)
       @store_quantity[identifier].sum
@@ -66,10 +112,6 @@ class ProductTest < ActiveSupport::TestCase
     def not_available_quantity(identifier)
       reserved_quantity(identifier) + sold_quantity(identifier)
     end
-  end
-
-  class Storage
-
   end
 
   test "can add product with initial available quantity" do
