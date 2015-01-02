@@ -37,7 +37,7 @@ class ProductTest < ActiveSupport::TestCase
       @store_quantity     = Hash.new{|hash, key| hash[key] = [] }
       @reserved_quantity  = Hash.new{|hash, key| hash[key] = [] }
       @sold_quantity      = Hash.new{|hash, key| hash[key] = [] }
-      @sales              = Hash.new{|hash, key| hash[key] = [] }
+      @history              = Hash.new{|hash, key| hash[key] = [] }
     end
 
     def register_product(identifier, store_quantity)
@@ -71,7 +71,7 @@ class ProductTest < ActiveSupport::TestCase
       raise QuantityTooBig if qty > reserved_quantity(identifier)
       @reserved_quantity[identifier] << -qty
       @sold_quantity[identifier]     << qty
-      @sales[identifier] << Sale.new(identifier, qty)
+      @history[identifier] << Sale.new(identifier, qty)
     end
 
     def expire_product(identifier, qty)
@@ -82,7 +82,7 @@ class ProductTest < ActiveSupport::TestCase
     def refund_product(identifier, qty)
       raise QuantityTooBig if qty > sold_quantity(identifier)
       @sold_quantity[identifier] << -qty
-      @sales[identifier] << Refund.new(identifier, qty)
+      @history[identifier] << Refund.new(identifier, qty)
     end
 
     private
