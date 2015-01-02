@@ -50,6 +50,27 @@ class ProductTest < ActiveSupport::TestCase
       end
     end
 
+    class Expiration
+      attr_reader :product_identifier
+
+      def initialize(product_identifier, expired_quantity)
+        @product_identifier = product_identifier
+        @expired_quantity   = expired_quantity
+      end
+
+      def available_quantity
+        @expired_quantity
+      end
+
+      def reserved_quantity
+        -@expired_quantity
+      end
+
+      def sold_quantity
+        0
+      end
+    end
+
     def initialize
       @store_quantity     = Hash.new{|hash, key| hash[key] = [] }
       @reserved_quantity  = Hash.new{|hash, key| hash[key] = [] }
@@ -94,6 +115,7 @@ class ProductTest < ActiveSupport::TestCase
     def expire_product(identifier, qty)
       raise QuantityTooBig if qty > reserved_quantity(identifier)
       @reserved_quantity[identifier] << -qty
+      @history[identifier] << Expiration.new(identifier, qty)
     end
 
     def refund_product(identifier, qty)
