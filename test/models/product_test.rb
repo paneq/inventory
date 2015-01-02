@@ -8,11 +8,10 @@ class ProductTest < ActiveSupport::TestCase
     QuantityTooLow = Class.new(Error)
 
     class Sale
-      attr_reader :product_identifier, :sold_quantity
+      attr_reader :sold_quantity
 
-      def initialize(product_identifier, sold_quantity)
-        @product_identifier = product_identifier
-        @sold_quantity      = sold_quantity
+      def initialize(sold_quantity)
+        @sold_quantity = sold_quantity
       end
 
       def reserved_quantity
@@ -21,10 +20,9 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     class Refund
-      attr_reader :product_identifier, :refunded_quantity
+      attr_reader :refunded_quantity
 
-      def initialize(product_identifier, refunded_quantity)
-        @product_identifier = product_identifier
+      def initialize(refunded_quantity)
         @refunded_quantity  = refunded_quantity
       end
 
@@ -38,10 +36,9 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     class Reservation
-      attr_reader :product_identifier, :reserved_quantity
+      attr_reader :reserved_quantity
 
-      def initialize(product_identifier, reserved_quantity)
-        @product_identifier = product_identifier
+      def initialize(reserved_quantity)
         @reserved_quantity  = reserved_quantity
       end
 
@@ -55,10 +52,7 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     class Expiration
-      attr_reader :product_identifier
-
-      def initialize(product_identifier, expired_quantity)
-        @product_identifier = product_identifier
+      def initialize(expired_quantity)
         @expired_quantity   = expired_quantity
       end
 
@@ -78,7 +72,7 @@ class ProductTest < ActiveSupport::TestCase
     class Registration
       attr_reader :store_quantity
 
-      def initialize(product_identifier, store_quantity)
+      def initialize(store_quantity)
         @store_quantity = store_quantity
       end
 
@@ -94,8 +88,7 @@ class ProductTest < ActiveSupport::TestCase
     class StoreQuantityChange
       attr_reader :store_quantity
 
-      def initialize(product_identifier, new_store_quantity, old_store_quantity)
-        @product_identifier = product_identifier
+      def initialize(new_store_quantity, old_store_quantity)
         @new_store_quantity = new_store_quantity
         @old_store_quantity = old_store_quantity
       end
@@ -120,7 +113,7 @@ class ProductTest < ActiveSupport::TestCase
 
     def register_product(identifier, store_quantity)
       @store_quantity[identifier] << store_quantity
-      @history[identifier] << Registration.new(identifier, store_quantity)
+      @history[identifier] << Registration.new(store_quantity)
     end
 
     def available_quantity(identifier)
@@ -131,7 +124,7 @@ class ProductTest < ActiveSupport::TestCase
       raise QuantityTooLow if qty  < not_available_quantity(identifier)
       @store_quantity[identifier] << -store_quantity(identifier)
       @store_quantity[identifier] << qty
-      @history[identifier] << StoreQuantityChange.new(identifier, qty, store_quantity(identifier))
+      @history[identifier] << StoreQuantityChange.new(qty, store_quantity(identifier))
     end
 
     def reserved_quantity(identifier)
@@ -144,22 +137,22 @@ class ProductTest < ActiveSupport::TestCase
 
     def reserve_product(identifier, qty)
       raise QuantityTooBig if qty > available_quantity(identifier)
-      @history[identifier] << Reservation.new(identifier, qty)
+      @history[identifier] << Reservation.new(qty)
     end
 
     def sell_product(identifier, qty)
       raise QuantityTooBig if qty > reserved_quantity(identifier)
-      @history[identifier] << Sale.new(identifier, qty)
+      @history[identifier] << Sale.new(qty)
     end
 
     def expire_product(identifier, qty)
       raise QuantityTooBig if qty > reserved_quantity(identifier)
-      @history[identifier] << Expiration.new(identifier, qty)
+      @history[identifier] << Expiration.new(qty)
     end
 
     def refund_product(identifier, qty)
       raise QuantityTooBig if qty > sold_quantity(identifier)
-      @history[identifier] << Refund.new(identifier, qty)
+      @history[identifier] << Refund.new(qty)
     end
 
     private
