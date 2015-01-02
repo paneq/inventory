@@ -33,11 +33,28 @@ class ProductTest < ActiveSupport::TestCase
       end
     end
 
+    class Reservation
+      attr_reader :product_identifier, :reserved_quantity
+
+      def initialize(product_identifier, reserved_quantity)
+        @product_identifier = product_identifier
+        @reserved_quantity  = reserved_quantity
+      end
+
+      def available_quantity
+        -@reserved_quantity
+      end
+
+      def sold_quantity
+        0
+      end
+    end
+
     def initialize
       @store_quantity     = Hash.new{|hash, key| hash[key] = [] }
       @reserved_quantity  = Hash.new{|hash, key| hash[key] = [] }
       @sold_quantity      = Hash.new{|hash, key| hash[key] = [] }
-      @history              = Hash.new{|hash, key| hash[key] = [] }
+      @history            = Hash.new{|hash, key| hash[key] = [] }
     end
 
     def register_product(identifier, store_quantity)
@@ -65,6 +82,7 @@ class ProductTest < ActiveSupport::TestCase
     def reserve_product(identifier, qty)
       raise QuantityTooBig if qty > available_quantity(identifier)
       @reserved_quantity[identifier]  << qty
+      @history[identifier] << Reservation.new(identifier, qty)
     end
 
     def sell_product(identifier, qty)
