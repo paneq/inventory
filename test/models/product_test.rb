@@ -39,7 +39,7 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def sell_product(identifier, qty)
-      raise QuantityTooBig if qty > @storage.reserved_quantity(identifier)
+      product(identifier).sell(qty)
       @storage.sell_product(identifier, qty)
     end
 
@@ -87,6 +87,10 @@ class ProductTest < ActiveSupport::TestCase
 
       def reserve(qty)
         raise QuantityTooBig if qty > @available_quantity
+      end
+
+      def sell(qty)
+        raise QuantityTooBig if qty > @reserved_quantity
       end
     end
 
