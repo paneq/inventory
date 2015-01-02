@@ -44,7 +44,7 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def expire_product(identifier, qty)
-      raise QuantityTooBig if qty > @storage.reserved_quantity(identifier)
+      product(identifier).expire(qty)
       @storage.expire_product(identifier, qty)
     end
 
@@ -90,6 +90,10 @@ class ProductTest < ActiveSupport::TestCase
       end
 
       def sell(qty)
+        raise QuantityTooBig if qty > @reserved_quantity
+      end
+
+      def expire(qty)
         raise QuantityTooBig if qty > @reserved_quantity
       end
     end
