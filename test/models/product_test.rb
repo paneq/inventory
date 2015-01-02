@@ -119,12 +119,10 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def initialize
-      @store_quantity     = Hash.new{|hash, key| hash[key] = [] }
       @history            = Hash.new{|hash, key| hash[key] = [] }
     end
 
     def register_product(identifier, store_quantity)
-      @store_quantity[identifier] << store_quantity
       @history[identifier] << Registration.new(store_quantity)
     end
 
@@ -135,8 +133,6 @@ class ProductTest < ActiveSupport::TestCase
     def change_quantity(identifier, qty)
       raise QuantityTooLow if qty  < not_available_quantity(identifier)
       @history[identifier] << StoreQuantityChange.new(qty, store_quantity(identifier))
-      @store_quantity[identifier] << -store_quantity(identifier)
-      @store_quantity[identifier] << qty
     end
 
     def reserved_quantity(identifier)
@@ -170,7 +166,7 @@ class ProductTest < ActiveSupport::TestCase
     private
 
     def store_quantity(identifier)
-      @store_quantity[identifier].sum
+      @history[identifier].select{|h| [Registration, StoreQuantityChange].include?(h.class) }.map(&:available_quantity).sum
     end
 
     def not_available_quantity(identifier)
