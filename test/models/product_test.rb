@@ -91,6 +91,28 @@ class ProductTest < ActiveSupport::TestCase
       end
     end
 
+    class StoreQuantityChange
+      attr_reader :store_quantity
+
+      def initialize(product_identifier, new_store_quantity, old_store_quantity)
+        @product_identifier = product_identifier
+        @new_store_quantity = new_store_quantity
+        @old_store_quantity = old_store_quantity
+      end
+
+      def available_quantity
+        @new_store_quantity - @old_store_quantity
+      end
+
+      def sold_quantity
+        0
+      end
+
+      def reserved_quantity
+        0
+      end
+    end
+
     def initialize
       @store_quantity     = Hash.new{|hash, key| hash[key] = [] }
       @history            = Hash.new{|hash, key| hash[key] = [] }
@@ -109,6 +131,7 @@ class ProductTest < ActiveSupport::TestCase
       raise QuantityTooLow if qty  < not_available_quantity(identifier)
       @store_quantity[identifier] << -store_quantity(identifier)
       @store_quantity[identifier] << qty
+      @history[identifier] << StoreQuantityChange.new(identifier, qty, store_quantity(identifier))
     end
 
     def reserved_quantity(identifier)
