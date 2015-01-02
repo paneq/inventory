@@ -75,6 +75,22 @@ class ProductTest < ActiveSupport::TestCase
       end
     end
 
+    class Registration
+      attr_reader :store_quantity
+
+      def initialize(product_identifier, store_quantity)
+        @store_quantity = store_quantity
+      end
+
+      def reserved_quantity
+        0
+      end
+
+      def sold_quantity
+        0
+      end
+    end
+
     def initialize
       @store_quantity     = Hash.new{|hash, key| hash[key] = [] }
       @history            = Hash.new{|hash, key| hash[key] = [] }
@@ -82,6 +98,7 @@ class ProductTest < ActiveSupport::TestCase
 
     def register_product(identifier, store_quantity)
       @store_quantity[identifier] << store_quantity
+      @history[identifier] << Registration.new(identifier, store_quantity)
     end
 
     def available_quantity(identifier)
