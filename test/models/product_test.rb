@@ -7,10 +7,24 @@ class ProductTest < ActiveSupport::TestCase
     QuantityTooBig = Class.new(Error)
     QuantityTooLow = Class.new(Error)
 
+    class Sale
+      attr_reader :product_identifier, :sold_quantity
+
+      def initialize(product_identifier, sold_quantity)
+        @product_identifier = product_identifier
+        @sold_quantity      = sold_quantity
+      end
+
+      def reserved_quantity
+        -@sold_quantity
+      end
+    end
+
     def initialize
       @store_quantity     = Hash.new{|hash, key| hash[key] = [] }
       @reserved_quantity  = Hash.new{|hash, key| hash[key] = [] }
       @sold_quantity      = Hash.new{|hash, key| hash[key] = [] }
+      @sales              = Hash.new{|hash, key| hash[key] = [] }
     end
 
     def register_product(identifier, store_quantity)
@@ -44,6 +58,7 @@ class ProductTest < ActiveSupport::TestCase
       raise QuantityTooBig if qty > reserved_quantity(identifier)
       @reserved_quantity[identifier] << -qty
       @sold_quantity[identifier]     << qty
+      @sales[identifier] << Sale.new(identifier, qty)
     end
 
     def expire_product(identifier, qty)
