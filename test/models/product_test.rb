@@ -31,6 +31,10 @@ class ProductTest < ActiveSupport::TestCase
       def sold_quantity
         -@refunded_quantity
       end
+
+      def reserved_quantity
+        0
+      end
     end
 
     class Reservation
@@ -93,7 +97,7 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def reserved_quantity(identifier)
-      @reserved_quantity[identifier].sum
+      @history[identifier].map(&:reserved_quantity).sum
     end
 
     def sold_quantity(identifier)
@@ -102,19 +106,16 @@ class ProductTest < ActiveSupport::TestCase
 
     def reserve_product(identifier, qty)
       raise QuantityTooBig if qty > available_quantity(identifier)
-      @reserved_quantity[identifier]  << qty
       @history[identifier] << Reservation.new(identifier, qty)
     end
 
     def sell_product(identifier, qty)
       raise QuantityTooBig if qty > reserved_quantity(identifier)
-      @reserved_quantity[identifier] << -qty
       @history[identifier] << Sale.new(identifier, qty)
     end
 
     def expire_product(identifier, qty)
       raise QuantityTooBig if qty > reserved_quantity(identifier)
-      @reserved_quantity[identifier] << -qty
       @history[identifier] << Expiration.new(identifier, qty)
     end
 
