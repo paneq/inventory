@@ -49,7 +49,7 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def refund_product(identifier, qty)
-      raise QuantityTooBig if qty > @storage.sold_quantity(identifier)
+      product(identifier).refund(qty)
       @storage.refund_product(identifier, qty)
     end
 
@@ -95,6 +95,10 @@ class ProductTest < ActiveSupport::TestCase
 
       def expire(qty)
         raise QuantityTooBig if qty > @reserved_quantity
+      end
+
+      def refund(qty)
+        raise QuantityTooBig if qty > @sold_quantity
       end
     end
 
