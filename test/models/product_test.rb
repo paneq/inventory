@@ -59,7 +59,7 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def sold_quantity(identifier)
-      @sold_quantity[identifier].sum
+      @history[identifier].map(&:sold_quantity).sum
     end
 
     def reserve_product(identifier, qty)
@@ -70,7 +70,6 @@ class ProductTest < ActiveSupport::TestCase
     def sell_product(identifier, qty)
       raise QuantityTooBig if qty > reserved_quantity(identifier)
       @reserved_quantity[identifier] << -qty
-      @sold_quantity[identifier]     << qty
       @history[identifier] << Sale.new(identifier, qty)
     end
 
@@ -81,7 +80,6 @@ class ProductTest < ActiveSupport::TestCase
 
     def refund_product(identifier, qty)
       raise QuantityTooBig if qty > sold_quantity(identifier)
-      @sold_quantity[identifier] << -qty
       @history[identifier] << Refund.new(identifier, qty)
     end
 
