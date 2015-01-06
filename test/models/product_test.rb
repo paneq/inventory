@@ -57,6 +57,10 @@ class ProductTest < ActiveSupport::TestCase
       @storage.product_history(identifier)
     end
 
+    def product_changes(identifier)
+      @storage.product_changes(identifier)
+    end
+
     private
 
     def product(identifier)
@@ -185,6 +189,15 @@ class ProductTest < ActiveSupport::TestCase
           changes_to_sum(available_changes),
           changes_to_sum(@reserved_quantity[identifier]),
           changes_to_sum(@sold_quantity[identifier])
+        )
+      end
+
+      def product_changes(identifier)
+        available_changes = [@store_quantity[identifier], @reserved_quantity[identifier].map{|x| -x}, @sold_quantity[identifier].map{|x| -x}].transpose.map(&:sum)
+        History.new(
+          available_changes,
+          @reserved_quantity[identifier],
+          @sold_quantity[identifier]
         )
       end
 
