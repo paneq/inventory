@@ -105,20 +105,17 @@ class ProductTest < ActiveSupport::TestCase
     class Product
       attr_reader :store_quantity,
                   :available_quantity,
-                  :not_available_quantity,
                   :reserved_quantity,
                   :sold_quantity,
                   :identifier
 
       def initialize(available_quantity:,
-                     not_available_quantity:,
                      reserved_quantity:,
                      sold_quantity:,
                      store_quantity:,
                      identifier:
       )
         @available_quantity     = available_quantity
-        @not_available_quantity = not_available_quantity
         @reserved_quantity      = reserved_quantity
         @sold_quantity          = sold_quantity
         @store_quantity         = store_quantity
@@ -128,7 +125,6 @@ class ProductTest < ActiveSupport::TestCase
       def self.unregistered(identifier)
         new(store_quantity: 0,
             available_quantity: 0,
-            not_available_quantity: 0,
             reserved_quantity: 0,
             sold_quantity: 0,
             identifier: identifier
@@ -234,9 +230,12 @@ class ProductTest < ActiveSupport::TestCase
 
       private
 
+      def not_available_quantity
+        reserved_quantity + sold_quantity
+      end
+
       attr_writer :store_quantity,
                   :available_quantity,
-                  :not_available_quantity,
                   :reserved_quantity,
                   :sold_quantity,
                   :identifier
@@ -288,13 +287,7 @@ class ProductTest < ActiveSupport::TestCase
       end
 
       def get_product(identifier)
-        Product.new(available_quantity:     available_quantity(identifier),
-                    not_available_quantity: not_available_quantity(identifier),
-                    reserved_quantity:      reserved_quantity(identifier),
-                    sold_quantity:          sold_quantity(identifier),
-                    store_quantity:         store_quantity(identifier),
-                    identifier:             identifier
-                   )
+        @products[identifier]
       end
 
       def save_product(product)
