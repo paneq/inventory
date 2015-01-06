@@ -53,6 +53,10 @@ class ProductTest < ActiveSupport::TestCase
       @storage.refund_product(identifier, qty)
     end
 
+    def product_history(identifier)
+      @storage.product_history(identifier)
+    end
+
     private
 
     def product(identifier)
@@ -102,6 +106,9 @@ class ProductTest < ActiveSupport::TestCase
       end
     end
 
+    class History < Struct.new(:available_quantity, :reserved_quantity, :sold_quantity)
+    end
+
     class Storage
       def initialize
         @store_quantity     = Hash.new{|hash, key| hash[key] = [] }
@@ -118,6 +125,8 @@ class ProductTest < ActiveSupport::TestCase
 
       def register_product(identifier, store_quantity)
         @store_quantity[identifier] << store_quantity
+        @reserved_quantity[identifier] << 0
+        @sold_quantity[identifier] << 0
       end
 
       def available_quantity(identifier)
@@ -125,8 +134,9 @@ class ProductTest < ActiveSupport::TestCase
       end
 
       def change_quantity(identifier, qty)
-        @store_quantity[identifier] << -store_quantity(identifier)
-        @store_quantity[identifier] << qty
+        @store_quantity[identifier] << -store_quantity(identifier) + qty
+        @reserved_quantity[identifier] << 0
+        @sold_quantity[identifier] << 0
       end
 
       def reserved_quantity(identifier)
@@ -138,20 +148,27 @@ class ProductTest < ActiveSupport::TestCase
       end
 
       def reserve_product(identifier, qty)
-        @reserved_quantity[identifier]  << qty
+        @reserved_quantity[identifier] << qty
+        @sold_quantity[identifier]     << 0
+        @store_quantity[identifier]    << 0
       end
 
       def sell_product(identifier, qty)
         @reserved_quantity[identifier] << -qty
         @sold_quantity[identifier]     << qty
+        @store_quantity[identifier]    << 0
       end
 
       def expire_product(identifier, qty)
         @reserved_quantity[identifier] << -qty
+        @store_quantity[identifier]    << 0
+        @sold_quantity[identifier]     << 0
       end
 
       def refund_product(identifier, qty)
         @sold_quantity[identifier] << -qty
+        @store_quantity[identifier]    << 0
+        @reserved_quantity[identifier] << 0
       end
 
       def store_quantity(identifier)
@@ -160,6 +177,21 @@ class ProductTest < ActiveSupport::TestCase
 
       def not_available_quantity(identifier)
         reserved_quantity(identifier) + sold_quantity(identifier)
+      end
+
+      def product_history(identifier)
+        available_changes = [@store_quantity[identifier], @reserved_quantity[identifier].map{|x| -x}, @sold_quantity[identifier].map{|x| -x}].transpose.map(&:sum)
+        History.new(
+          changes_to_sum(available_changes),
+          changes_to_sum(@reserved_quantity[identifier]),
+          changes_to_sum(@sold_quantity[identifier])
+        )
+      end
+
+      private
+
+      def changes_to_sum(changes)
+        changes.size.times.map{|i| changes[0..i].sum }
       end
     end
 
