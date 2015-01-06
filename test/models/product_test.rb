@@ -14,8 +14,9 @@ class ProductTest < ActiveSupport::TestCase
 
     def register_product(identifier, store_quantity)
       product = Product.unregistered(identifier)
-      product.register(store_quantity)
+      change  = product.register(store_quantity)
       @storage.register_product(identifier, store_quantity)
+      @storage.save_change(change)
     end
 
     def available_quantity(identifier)
@@ -23,8 +24,9 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def change_quantity(identifier, qty)
-      product(identifier).change_quantity(qty)
+      change = product(identifier).change_quantity(qty)
       @storage.change_quantity(identifier, qty)
+      @storage.save_change(change)
     end
 
     def reserved_quantity(identifier)
@@ -36,23 +38,27 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def reserve_product(identifier, qty)
-      product(identifier).reserve(qty)
+      change = product(identifier).reserve(qty)
       @storage.reserve_product(identifier, qty)
+      @storage.save_change(change)
     end
 
     def sell_product(identifier, qty)
-      product(identifier).sell(qty)
+      change = product(identifier).sell(qty)
       @storage.sell_product(identifier, qty)
+      @storage.save_change(change)
     end
 
     def expire_product(identifier, qty)
-      product(identifier).expire(qty)
+      change = product(identifier).expire(qty)
       @storage.expire_product(identifier, qty)
+      @storage.save_change(change)
     end
 
     def refund_product(identifier, qty)
-      product(identifier).refund(qty)
+      change = product(identifier).refund(qty)
       @storage.refund_product(identifier, qty)
+      @storage.save_change(change)
     end
 
     def product_history(identifier)
@@ -74,6 +80,7 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     class ProductHistoryChange < Struct.new(
+      :identifier,
       :available_quantity,
       :reserved_quantity,
       :sold_quantity,
@@ -120,6 +127,7 @@ class ProductTest < ActiveSupport::TestCase
       def register(qty)
         self.available_quantity += qty
         ProductHistoryChange.new(
+          identifier,
           available_quantity,
           reserved_quantity,
           sold_quantity,
@@ -135,6 +143,7 @@ class ProductTest < ActiveSupport::TestCase
         self.available_quantity -= available_quantity_change
 
         ProductHistoryChange.new(
+          identifier,
           available_quantity,
           reserved_quantity,
           sold_quantity,
@@ -150,6 +159,7 @@ class ProductTest < ActiveSupport::TestCase
         self.reserved_quantity  += qty
 
         ProductHistoryChange.new(
+          identifier,
           available_quantity,
           reserved_quantity,
           sold_quantity,
@@ -166,6 +176,7 @@ class ProductTest < ActiveSupport::TestCase
         self.sold_quantity     += qty
 
         ProductHistoryChange.new(
+          identifier,
           available_quantity,
           reserved_quantity,
           sold_quantity,
@@ -182,6 +193,7 @@ class ProductTest < ActiveSupport::TestCase
         self.reserved_quantity  -= qty
 
         ProductHistoryChange.new(
+          identifier,
           available_quantity,
           reserved_quantity,
           sold_quantity,
@@ -197,6 +209,7 @@ class ProductTest < ActiveSupport::TestCase
         self.available_quantity += qty
         self.sold_quantity      -= qty
         ProductHistoryChange.new(
+          identifier,
           available_quantity,
           reserved_quantity,
           sold_quantity,
@@ -224,6 +237,7 @@ class ProductTest < ActiveSupport::TestCase
         @store_quantity     = Hash.new{|hash, key| hash[key] = [] }
         @reserved_quantity  = Hash.new{|hash, key| hash[key] = [] }
         @sold_quantity      = Hash.new{|hash, key| hash[key] = [] }
+        @changes            = Hash.new{|hash, key| hash[key] = [] }
       end
 
       def get_product(identifier)
@@ -290,6 +304,10 @@ class ProductTest < ActiveSupport::TestCase
 
       def not_available_quantity(identifier)
         reserved_quantity(identifier) + sold_quantity(identifier)
+      end
+
+      def save_change(change)
+        @changes[change.identifier] << change
       end
 
       def product_history(identifier)
