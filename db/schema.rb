@@ -11,12 +11,32 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20141212175847) do
+ActiveRecord::Schema.define(version: 20150106132319) do
 
-  create_table "products", force: true do |t|
-    t.string   "name"
+  create_table "changes", force: true do |t|
+    t.string   "identifier",              null: false
+    t.integer  "available_quantity",      null: false
+    t.integer  "reserved_quantity",       null: false
+    t.integer  "sold_quantity",           null: false
+    t.integer  "available_quantity_diff", null: false
+    t.integer  "reserved_quantity_diff",  null: false
+    t.integer  "sold_quantity_diff",      null: false
     t.datetime "created_at"
     t.datetime "updated_at"
   end
+
+  add_index "changes", ["identifier"], name: "index_changes_on_identifier"
+
+  create_table "products", id: false, force: true do |t|
+    t.string   "identifier",         null: false
+    t.integer  "available_quantity", null: false
+    t.integer  "reserved_quantity",  null: false
+    t.integer  "sold_quantity",      null: false
+    t.integer  "store_quantity",     null: false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "products", ["identifier"], name: "index_products_on_identifier", unique: true
 
 end

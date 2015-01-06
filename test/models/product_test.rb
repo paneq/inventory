@@ -7,8 +7,8 @@ class ProductTest < ActiveSupport::TestCase
     QuantityTooBig = Class.new(Error)
     QuantityTooLow = Class.new(Error)
 
-    def initialize
-      @storage = Storage.new
+    def initialize(storage)
+      @storage = storage
     end
 
     def register_product(identifier, store_quantity)
@@ -292,8 +292,71 @@ class ProductTest < ActiveSupport::TestCase
       end
     end
 
-  end
+    class ActiveRecordStorage
+      class ArProduct < ActiveRecord::Base
+        self.table_name  = "products"
+        self.primary_key = "identifier"
+      end
 
+      class ArChange < ActiveRecord::Base
+        self.table_name = "changes"
+      end
+
+      def initialize
+        @products = {}
+        @identity_map = {}
+      end
+
+      def get_product(identifier)
+        @identity_map[identifier] = ar = ArProduct.find(identifier)
+        product = Product.new(
+          available_quantity: ar.available_quantity,
+          reserved_quantity:  ar.reserved_quantity,
+          sold_quantity:      ar.sold_quantity,
+          store_quantity:     ar.store_quantity,
+          identifier:         ar.identifier
+        )
+        @products[identifier] = product
+      end
+
+      def save_product(product)
+        ar = @identity_map[product.identifier] || ArProduct.new
+        ar.available_quantity = product.available_quantity
+        ar.reserved_quantity =  product.reserved_quantity
+        ar.sold_quantity =      product.sold_quantity
+        ar.store_quantity =     product.store_quantity
+        ar.identifier =         product.identifier
+        ar.save!
+        @products[product.identifier] = product
+      end
+
+      def save_change(change)
+        ArChange.new(
+          identifier: change.identifier,
+          available_quantity: change.available_quantity,
+          reserved_quantity: change.reserved_quantity,
+          sold_quantity: change.sold_quantity,
+          available_quantity_diff: change.available_quantity_change,
+          reserved_quantity_diff: change.reserved_quantity_change,
+          sold_quantity_diff: change.sold_quantity_change,
+        ).save!
+      end
+
+      def product_changes(identifier)
+        ArChange.where(identifier: identifier).order("id ASC").map do |ar|
+          ProductHistoryChange.new(
+            ar.identifier,
+            ar.available_quantity,
+            ar.reserved_quantity,
+            ar.sold_quantity,
+            ar.available_quantity_diff,
+            ar.reserved_quantity_diff,
+            ar.sold_quantity_diff
+          )
+        end
+      end
+    end
+  end
 
 
   test "can add product with initial available quantity" do
@@ -512,6 +575,6 @@ class ProductTest < ActiveSupport::TestCase
   private
 
   def inventory
-    @inventory ||= Inventory.new
+    Inventory.new(Inventory::ActiveRecordStorage.new)
   end
 end
