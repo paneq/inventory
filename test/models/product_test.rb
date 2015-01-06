@@ -13,6 +13,8 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def register_product(identifier, store_quantity)
+      product = Product.unregistered(identifier)
+      product.register(store_quantity)
       @storage.register_product(identifier, store_quantity)
     end
 
@@ -71,43 +73,147 @@ class ProductTest < ActiveSupport::TestCase
       @storage.store_quantity(identifier)
     end
 
+    class ProductHistoryChange < Struct.new(
+      :available_quantity,
+      :reserved_quantity,
+      :sold_quantity,
+      :available_quantity_change,
+      :reserved_quantity_change,
+      :sold_quantity_change
+    )
+    end
+
 
     class Product
-      attr_reader :available_quantity,
+      attr_reader :store_quantity,
+                  :available_quantity,
                   :not_available_quantity,
                   :reserved_quantity,
-                  :sold_quantity
+                  :sold_quantity,
+                  :identifier
 
-      def initialize(available_quantity:     available_quantity,
-                     not_available_quantity: not_available_quantity,
-                     reserved_quantity:      reserved_quantity,
-                     sold_quantity:          sold_quantity
+      def initialize(available_quantity:,
+                     not_available_quantity:,
+                     reserved_quantity:,
+                     sold_quantity:,
+                     store_quantity:,
+                     identifier:
       )
         @available_quantity     = available_quantity
         @not_available_quantity = not_available_quantity
         @reserved_quantity      = reserved_quantity
         @sold_quantity          = sold_quantity
+        @store_quantity         = store_quantity
+        @identifier             = identifier
+      end
+
+      def self.unregistered(identifier)
+        new(store_quantity: 0,
+            available_quantity: 0,
+            not_available_quantity: 0,
+            reserved_quantity: 0,
+            sold_quantity: 0,
+            identifier: identifier
+           )
+      end
+
+      def register(qty)
+        self.available_quantity += qty
+        ProductHistoryChange.new(
+          available_quantity,
+          reserved_quantity,
+          sold_quantity,
+          qty,
+          0,
+          0
+        )
       end
 
       def change_quantity(qty)
-        raise QuantityTooLow if qty  < @not_available_quantity
+        raise QuantityTooLow if qty  < not_available_quantity
+        available_quantity_change = qty - store_quantity
+        self.available_quantity -= available_quantity_change
+
+        ProductHistoryChange.new(
+          available_quantity,
+          reserved_quantity,
+          sold_quantity,
+          available_quantity_change,
+          0,
+          0
+        )
       end
 
       def reserve(qty)
-        raise QuantityTooBig if qty > @available_quantity
+        raise QuantityTooBig if qty > available_quantity
+        self.available_quantity -= qty
+        self.reserved_quantity  += qty
+
+        ProductHistoryChange.new(
+          available_quantity,
+          reserved_quantity,
+          sold_quantity,
+          -qty,
+          +qty,
+          0
+        )
       end
 
       def sell(qty)
-        raise QuantityTooBig if qty > @reserved_quantity
+        raise QuantityTooBig if qty > reserved_quantity
+
+        self.reserved_quantity -= qty
+        self.sold_quantity     += qty
+
+        ProductHistoryChange.new(
+          available_quantity,
+          reserved_quantity,
+          sold_quantity,
+          0,
+          -qty,
+          +qty
+        )
       end
 
       def expire(qty)
-        raise QuantityTooBig if qty > @reserved_quantity
+        raise QuantityTooBig if qty > reserved_quantity
+
+        self.available_quantity += qty
+        self.reserved_quantity  -= qty
+
+        ProductHistoryChange.new(
+          available_quantity,
+          reserved_quantity,
+          sold_quantity,
+          +qty,
+          -qty,
+          0
+        )
       end
 
       def refund(qty)
-        raise QuantityTooBig if qty > @sold_quantity
+        raise QuantityTooBig if qty > sold_quantity
+
+        self.available_quantity += qty
+        self.sold_quantity      -= qty
+        ProductHistoryChange.new(
+          available_quantity,
+          reserved_quantity,
+          sold_quantity,
+          +qty,
+          0,
+          -qty,
+        )
       end
+
+      private
+
+      attr_writer :store_quantity,
+                  :available_quantity,
+                  :not_available_quantity,
+                  :reserved_quantity,
+                  :sold_quantity,
+                  :identifier
     end
 
     class History < Struct.new(:available_quantity, :reserved_quantity, :sold_quantity)
@@ -124,7 +230,10 @@ class ProductTest < ActiveSupport::TestCase
         Product.new(available_quantity:     available_quantity(identifier),
                     not_available_quantity: not_available_quantity(identifier),
                     reserved_quantity:      reserved_quantity(identifier),
-                    sold_quantity:          sold_quantity(identifier))
+                    sold_quantity:          sold_quantity(identifier),
+                    store_quantity:         store_quantity(identifier),
+                    identifier:             identifier
+                   )
       end
 
       def register_product(identifier, store_quantity)
