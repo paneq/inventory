@@ -7,7 +7,6 @@ class ProductTest < ActiveSupport::TestCase
     QuantityTooBig = Class.new(Error)
     QuantityTooLow = Class.new(Error)
 
-
     def initialize
       @storage = Storage.new
     end
@@ -15,7 +14,6 @@ class ProductTest < ActiveSupport::TestCase
     def register_product(identifier, store_quantity)
       product = Product.unregistered(identifier)
       change  = product.register(store_quantity)
-      @storage.register_product(identifier, store_quantity)
       @storage.save_change(change)
       @storage.save_product(product)
     end
@@ -27,7 +25,6 @@ class ProductTest < ActiveSupport::TestCase
     def change_quantity(identifier, qty)
       product = product(identifier)
       change  = product.change_quantity(qty)
-      @storage.change_quantity(identifier, qty)
       @storage.save_change(change)
       @storage.save_product(product)
     end
@@ -43,7 +40,6 @@ class ProductTest < ActiveSupport::TestCase
     def reserve_product(identifier, qty)
       product = product(identifier)
       change = product.reserve(qty)
-      @storage.reserve_product(identifier, qty)
       @storage.save_change(change)
       @storage.save_product(product)
     end
@@ -51,7 +47,6 @@ class ProductTest < ActiveSupport::TestCase
     def sell_product(identifier, qty)
       product = product(identifier)
       change = product.sell(qty)
-      @storage.sell_product(identifier, qty)
       @storage.save_change(change)
       @storage.save_product(product)
     end
@@ -59,7 +54,6 @@ class ProductTest < ActiveSupport::TestCase
     def expire_product(identifier, qty)
       product = product(identifier)
       change = product.expire(qty)
-      @storage.expire_product(identifier, qty)
       @storage.save_change(change)
       @storage.save_product(product)
     end
@@ -67,7 +61,6 @@ class ProductTest < ActiveSupport::TestCase
     def refund_product(identifier, qty)
       product = product(identifier)
       change = product.refund(qty)
-      @storage.refund_product(identifier, qty)
       @storage.save_change(change)
       @storage.save_product(product)
     end
@@ -100,7 +93,6 @@ class ProductTest < ActiveSupport::TestCase
       :sold_quantity_change
     )
     end
-
 
     class Product
       attr_reader :store_quantity,
@@ -279,11 +271,8 @@ class ProductTest < ActiveSupport::TestCase
 
     class Storage
       def initialize
-        @store_quantity     = Hash.new{|hash, key| hash[key] = [] }
-        @reserved_quantity  = Hash.new{|hash, key| hash[key] = [] }
-        @sold_quantity      = Hash.new{|hash, key| hash[key] = [] }
-        @changes            = Hash.new{|hash, key| hash[key] = [] }
-        @products           = Hash.new
+        @changes  = Hash.new{|hash, key| hash[key] = [] }
+        @products = Hash.new
       end
 
       def get_product(identifier)
@@ -294,74 +283,12 @@ class ProductTest < ActiveSupport::TestCase
         @products[product.identifier] = product
       end
 
-      def register_product(identifier, store_quantity)
-        @store_quantity[identifier] << store_quantity
-        @reserved_quantity[identifier] << 0
-        @sold_quantity[identifier] << 0
-      end
-
-      def available_quantity(identifier)
-        store_quantity(identifier) - reserved_quantity(identifier) - sold_quantity(identifier)
-      end
-
-      def change_quantity(identifier, qty)
-        @store_quantity[identifier] << -store_quantity(identifier) + qty
-        @reserved_quantity[identifier] << 0
-        @sold_quantity[identifier] << 0
-      end
-
-      def reserved_quantity(identifier)
-        @reserved_quantity[identifier].sum
-      end
-
-      def sold_quantity(identifier)
-        @sold_quantity[identifier].sum
-      end
-
-      def reserve_product(identifier, qty)
-        @reserved_quantity[identifier] << qty
-        @sold_quantity[identifier]     << 0
-        @store_quantity[identifier]    << 0
-      end
-
-      def sell_product(identifier, qty)
-        @reserved_quantity[identifier] << -qty
-        @sold_quantity[identifier]     << qty
-        @store_quantity[identifier]    << 0
-      end
-
-      def expire_product(identifier, qty)
-        @reserved_quantity[identifier] << -qty
-        @store_quantity[identifier]    << 0
-        @sold_quantity[identifier]     << 0
-      end
-
-      def refund_product(identifier, qty)
-        @sold_quantity[identifier] << -qty
-        @store_quantity[identifier]    << 0
-        @reserved_quantity[identifier] << 0
-      end
-
-      def store_quantity(identifier)
-        @store_quantity[identifier].sum
-      end
-
-      def not_available_quantity(identifier)
-        reserved_quantity(identifier) + sold_quantity(identifier)
-      end
-
       def save_change(change)
         @changes[change.identifier] << change
       end
 
       def product_changes(identifier)
         @changes[identifier]
-      end
-
-      private
-
-      def changes_to_sum(changes)
-        changes.size.times.map{|i| changes[0..i].sum }
       end
     end
 
