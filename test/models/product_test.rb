@@ -62,11 +62,11 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def product_history(identifier)
-      @storage.product_history(identifier)
+      StateHistory.new( changes: @storage.product_changes(identifier) )
     end
 
     def product_changes(identifier)
-      @storage.product_changes(identifier)
+      ChangeHistory.new( changes: @storage.product_changes(identifier) )
     end
 
     private
@@ -140,7 +140,7 @@ class ProductTest < ActiveSupport::TestCase
       def change_quantity(qty)
         raise QuantityTooLow if qty  < not_available_quantity
         available_quantity_change = qty - store_quantity
-        self.available_quantity -= available_quantity_change
+        self.available_quantity  += available_quantity_change
 
         ProductHistoryChange.new(
           identifier,
@@ -229,7 +229,40 @@ class ProductTest < ActiveSupport::TestCase
                   :identifier
     end
 
-    class History < Struct.new(:available_quantity, :reserved_quantity, :sold_quantity)
+    class StateHistory
+      def initialize(changes:)
+        @changes = changes
+      end
+
+      def available_quantity
+        @changes.map(&:available_quantity)
+      end
+
+      def reserved_quantity
+        @changes.map(&:reserved_quantity)
+      end
+
+      def sold_quantity
+        @changes.map(&:sold_quantity)
+      end
+    end
+
+    class ChangeHistory
+      def initialize(changes:)
+        @changes = changes
+      end
+
+      def available_quantity
+        @changes.map(&:available_quantity_change)
+      end
+
+      def reserved_quantity
+        @changes.map(&:reserved_quantity_change)
+      end
+
+      def sold_quantity
+        @changes.map(&:sold_quantity_change)
+      end
     end
 
     class Storage
@@ -310,22 +343,8 @@ class ProductTest < ActiveSupport::TestCase
         @changes[change.identifier] << change
       end
 
-      def product_history(identifier)
-        available_changes = [@store_quantity[identifier], @reserved_quantity[identifier].map{|x| -x}, @sold_quantity[identifier].map{|x| -x}].transpose.map(&:sum)
-        History.new(
-          changes_to_sum(available_changes),
-          changes_to_sum(@reserved_quantity[identifier]),
-          changes_to_sum(@sold_quantity[identifier])
-        )
-      end
-
       def product_changes(identifier)
-        available_changes = [@store_quantity[identifier], @reserved_quantity[identifier].map{|x| -x}, @sold_quantity[identifier].map{|x| -x}].transpose.map(&:sum)
-        History.new(
-          available_changes,
-          @reserved_quantity[identifier],
-          @sold_quantity[identifier]
-        )
+        @changes[identifier]
       end
 
       private
