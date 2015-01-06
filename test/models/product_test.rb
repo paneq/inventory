@@ -17,6 +17,7 @@ class ProductTest < ActiveSupport::TestCase
       change  = product.register(store_quantity)
       @storage.register_product(identifier, store_quantity)
       @storage.save_change(change)
+      @storage.save_product(product)
     end
 
     def available_quantity(identifier)
@@ -24,9 +25,11 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def change_quantity(identifier, qty)
-      change = product(identifier).change_quantity(qty)
+      product = product(identifier)
+      change  = product.change_quantity(qty)
       @storage.change_quantity(identifier, qty)
       @storage.save_change(change)
+      @storage.save_product(product)
     end
 
     def reserved_quantity(identifier)
@@ -38,27 +41,35 @@ class ProductTest < ActiveSupport::TestCase
     end
 
     def reserve_product(identifier, qty)
-      change = product(identifier).reserve(qty)
+      product = product(identifier)
+      change = product.reserve(qty)
       @storage.reserve_product(identifier, qty)
       @storage.save_change(change)
+      @storage.save_product(product)
     end
 
     def sell_product(identifier, qty)
-      change = product(identifier).sell(qty)
+      product = product(identifier)
+      change = product.sell(qty)
       @storage.sell_product(identifier, qty)
       @storage.save_change(change)
+      @storage.save_product(product)
     end
 
     def expire_product(identifier, qty)
-      change = product(identifier).expire(qty)
+      product = product(identifier)
+      change = product.expire(qty)
       @storage.expire_product(identifier, qty)
       @storage.save_change(change)
+      @storage.save_product(product)
     end
 
     def refund_product(identifier, qty)
-      change = product(identifier).refund(qty)
+      product = product(identifier)
+      change = product.refund(qty)
       @storage.refund_product(identifier, qty)
       @storage.save_change(change)
+      @storage.save_product(product)
     end
 
     def product_history(identifier)
@@ -126,6 +137,7 @@ class ProductTest < ActiveSupport::TestCase
 
       def register(qty)
         self.available_quantity += qty
+        self.store_quantity = qty
         ProductHistoryChange.new(
           identifier,
           available_quantity,
@@ -141,6 +153,7 @@ class ProductTest < ActiveSupport::TestCase
         raise QuantityTooLow if qty  < not_available_quantity
         available_quantity_change = qty - store_quantity
         self.available_quantity  += available_quantity_change
+        self.store_quantity = qty
 
         ProductHistoryChange.new(
           identifier,
@@ -271,6 +284,7 @@ class ProductTest < ActiveSupport::TestCase
         @reserved_quantity  = Hash.new{|hash, key| hash[key] = [] }
         @sold_quantity      = Hash.new{|hash, key| hash[key] = [] }
         @changes            = Hash.new{|hash, key| hash[key] = [] }
+        @products           = Hash.new
       end
 
       def get_product(identifier)
@@ -281,6 +295,10 @@ class ProductTest < ActiveSupport::TestCase
                     store_quantity:         store_quantity(identifier),
                     identifier:             identifier
                    )
+      end
+
+      def save_product(product)
+        @products[product.identifier] = product
       end
 
       def register_product(identifier, store_quantity)
