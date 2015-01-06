@@ -361,6 +361,21 @@ class ProductTest < ActiveSupport::TestCase
     assert_equal [0, 0, 0, 0, 0, 4, 0],   history.sold_quantity
   end
 
+  test "history of changes" do
+    inventory.register_product("WROCLOVE2014", 9)
+    inventory.change_quantity("WROCLOVE2014", 10)
+    inventory.reserve_product("WROCLOVE2014", 4)
+    inventory.reserve_product("WROCLOVE2014", 4)
+    inventory.expire_product("WROCLOVE2014", 4)
+    inventory.sell_product("WROCLOVE2014", 4)
+    inventory.refund_product("WROCLOVE2014", 4)
+
+    changes = inventory.product_changes("WROCLOVE2014")
+    assert_equal [+9, +1, -4, -4, +4, 0, +4], changes.available_quantity
+    assert_equal [0, 0, +4, +4, -4, -4, 0],   changes.reserved_quantity
+    assert_equal [0, 0, 0, 0, 0, +4, -4],     changes.sold_quantity
+  end
+
   # Per order rules... - out of scope for now
   # test "can't expire more qty than reserved for that order"
   # test "can't refund more qty than sold for that order"
